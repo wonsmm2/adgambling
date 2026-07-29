@@ -26,7 +26,7 @@ const io = new Server(httpServer, {
 io.use(socketAuthMiddleware);
 registerSocketHandlers(io);
 
-const port = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT) || 4000;
 httpServer.listen(port, () => {
   console.log(`섯다 서버가 http://localhost:${port} 에서 실행 중입니다.`);
 });
