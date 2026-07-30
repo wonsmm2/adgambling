@@ -14,6 +14,7 @@ export default function GamePage() {
 
   const [roomState, setRoomState] = useState<RoomStatePayload | null>(null);
   const [myCards, setMyCards] = useState<CardType[] | null>(null);
+  const [myRankLabel, setMyRankLabel] = useState<string | null>(null);
   const [result, setResult] = useState<GameResultPayload | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
@@ -33,17 +34,24 @@ export default function GamePage() {
         setResult(null);
         // game:dealt가 room:state보다 먼저 도착하므로, 이번 핸드에 참여하지 않을 때만 비운다
         const me = payload.players.find((p) => p.userId === user?.id);
-        if (!me?.hasCards) setMyCards(null);
+        if (!me?.hasCards) {
+          setMyCards(null);
+          setMyRankLabel(null);
+        }
       }
       // 인원 부족 등으로 다음 핸드가 시작되지 못하고 대기 상태로 돌아간 경우에도 결과창을 정리한다.
       if (payload.status === "WAITING") {
         setResult(null);
         setMyCards(null);
+        setMyRankLabel(null);
       }
       lastHandNumber.current = payload.handNumber;
       setRoomState(payload);
     };
-    const onDealt = (payload: { cards: CardType[] }) => setMyCards(payload.cards);
+    const onDealt = (payload: { cards: CardType[]; rankLabel?: string }) => {
+      setMyCards(payload.cards);
+      setMyRankLabel(payload.rankLabel ?? null);
+    };
     const onResult = (payload: GameResultPayload) => setResult(payload);
     const onError = (payload: { message: string }) => setErrorMsg(payload.message);
     const onNotice = (payload: { message: string }) => setNoticeMsg(payload.message);
@@ -106,6 +114,8 @@ export default function GamePage() {
   const isDealer = roomState.dealerUserId === user.id;
   const myRevealed = revealedByUserId.get(user.id) ?? null;
   const displayCards = myRevealed ?? myCards;
+  const myFinalRankLabel = result?.results.find((r) => r.userId === user.id)?.rankLabel;
+  const displayRankLabel = myFinalRankLabel ?? myRankLabel;
 
   function act(type: BetActionType) {
     getSocket()?.emit("game:action", { type });
@@ -171,10 +181,15 @@ export default function GamePage() {
         </div>
 
         {displayCards && (
-          <div className="my-cards">
-            {displayCards.map((c, i) => (
-              <Card key={i} card={c} large />
-            ))}
+          <div className="my-cards-wrap">
+            <div className="my-cards">
+              {displayCards.map((c, i) => (
+                <Card key={i} card={c} large />
+              ))}
+            </div>
+            {displayCards.length === 2 && displayRankLabel && (
+              <div className="my-rank-label">{displayRankLabel}</div>
+            )}
           </div>
         )}
 

@@ -2,7 +2,13 @@ import type { Server, Socket } from "socket.io";
 import { roomManager } from "../game/RoomManager.js";
 import type { Room } from "../game/Room.js";
 import { prisma } from "../prismaClient.js";
+import { evaluateBase } from "../game/handRank.js";
 import type { BetActionType, Card, ErrorPayload } from "../types.js";
+
+function dealtPayload(cards: Card[]) {
+  const rankLabel = cards.length === 2 ? evaluateBase(cards as [Card, Card]).label : undefined;
+  return { cards, rankLabel };
+}
 
 // 계정당 세션은 하나만 허용한다. 새 소켓이 연결되면 기존 소켓은 종료된다.
 const userSockets = new Map<string, Socket>();
@@ -22,7 +28,7 @@ function attachRoomBroadcast(io: Server, room: Room) {
 
   room.on("dealt", (dealt: Map<string, Card[]>) => {
     for (const [userId, cards] of dealt) {
-      emitToUser(userId, "game:dealt", { cards });
+      emitToUser(userId, "game:dealt", dealtPayload(cards));
     }
   });
 
@@ -61,7 +67,7 @@ export function registerSocketHandlers(io: Server) {
       attachRoomBroadcast(io, existingRoom);
       socket.emit("room:state", existingRoom.toStatePayload());
       const cards = existingRoom.getPlayerCards(userId);
-      if (cards) socket.emit("game:dealt", { cards });
+      if (cards) socket.emit("game:dealt", dealtPayload(cards));
     }
 
     socket.on("room:create", async () => {
