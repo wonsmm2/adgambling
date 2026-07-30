@@ -267,6 +267,7 @@ export default function GamePage() {
             disabled={!isMyTurn}
             currentBet={roomState.currentBet}
             myBet={me?.currentBet ?? 0}
+            chips={me?.chips ?? user.chips}
             onAction={act}
           />
         )}
