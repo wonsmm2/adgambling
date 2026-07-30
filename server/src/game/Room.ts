@@ -25,6 +25,7 @@ interface InternalPlayer {
   inHand: boolean;
   allIn: boolean;
   currentBet: number; // 이번 배팅 라운드에서 낸 금액 (라운드마다 0으로 초기화)
+  totalBet: number; // 이번 핸드에서 지금까지 낸 총 배팅액 (1·2라운드 통합, 안테 제외, 새 핸드마다 0으로 초기화)
 }
 
 /**
@@ -92,6 +93,7 @@ export class Room extends EventEmitter {
       inHand: false,
       allIn: false,
       currentBet: 0,
+      totalBet: 0,
     });
     this.emitState();
   }
@@ -163,6 +165,7 @@ export class Room extends EventEmitter {
       p.folded = false;
       p.allIn = false;
       p.currentBet = 0;
+      p.totalBet = 0;
       p.inHand = eligible.includes(p);
     }
 
@@ -228,18 +231,18 @@ export class Room extends EventEmitter {
     ].map((p) => p.userId);
   }
 
+  /**
+   * userId 다음으로 액션할 사람을 좌석 순서 기준으로 찾는다.
+   * userId 본인이 방금 다이해서 더 이상 "활성" 목록에 없을 수 있으므로, 좌석 위치를
+   * 찾을 때는 폴드 여부와 무관하게 전체 플레이어 목록(this.playerList)을 기준으로 삼는다.
+   */
   private nextActiveAfter(userId: string): string | null {
-    const allActiveIncludingAllIn = this.playerList.filter(
-      (p) => p.inHand && !p.folded
-    );
-    const idx = allActiveIncludingAllIn.findIndex((p) => p.userId === userId);
+    const all = this.playerList;
+    const idx = all.findIndex((p) => p.userId === userId);
     if (idx === -1) return null;
-    for (let step = 1; step <= allActiveIncludingAllIn.length; step++) {
-      const candidate =
-        allActiveIncludingAllIn[
-          (idx + step) % allActiveIncludingAllIn.length
-        ];
-      if (candidate && !candidate.allIn) return candidate.userId;
+    for (let step = 1; step <= all.length; step++) {
+      const candidate = all[(idx + step) % all.length];
+      if (candidate.inHand && !candidate.folded && !candidate.allIn) return candidate.userId;
     }
     return null;
   }
@@ -320,6 +323,7 @@ export class Room extends EventEmitter {
     const pay = Math.min(need, player.chips);
     player.chips -= pay;
     player.currentBet += pay;
+    player.totalBet += pay;
     this.pot += pay;
     if (player.chips === 0) player.allIn = true;
     this.pendingAction.delete(player.userId);
@@ -331,6 +335,7 @@ export class Room extends EventEmitter {
     const pay = Math.min(need, player.chips);
     player.chips -= pay;
     player.currentBet += pay;
+    player.totalBet += pay;
     this.pot += pay;
     if (player.chips === 0) player.allIn = true;
     this.currentBet = Math.max(this.currentBet, player.currentBet);
@@ -571,6 +576,7 @@ export class Room extends EventEmitter {
       folded: p.folded,
       inHand: p.inHand,
       currentBet: p.currentBet,
+      totalBet: p.totalBet,
       hasCards: p.inHand && p.cards.length > 0,
     }));
   }

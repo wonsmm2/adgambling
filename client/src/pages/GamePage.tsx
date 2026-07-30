@@ -62,7 +62,7 @@ export default function GamePage() {
       // 직전 상태와 비교해 배팅액이 늘어난 플레이어가 있으면, 그 자리에서 팟으로 지폐가
       // 날아가는 연출을 트리거한다 (족보 계산과 무관한 순수 시각 효과).
       const prevBets = prevPlayersRef.current;
-      const nextBets = new Map(payload.players.map((p) => [p.userId, p.currentBet]));
+      const nextBets = new Map(payload.players.map((p) => [p.userId, p.totalBet]));
       if (prevBets && payload.status === "BETTING") {
         const potEl = document.querySelector("[data-pot-anchor]");
         const potRect = potEl?.getBoundingClientRect();
@@ -70,7 +70,7 @@ export default function GamePage() {
           const to = { x: potRect.left + potRect.width / 2, y: potRect.top + potRect.height / 2 };
           const batches: FlyingBatch[] = [];
           for (const p of payload.players) {
-            const delta = p.currentBet - (prevBets.get(p.userId) ?? 0);
+            const delta = p.totalBet - (prevBets.get(p.userId) ?? 0);
             if (delta <= 0) continue;
             const from = seatCenter(p.userId);
             if (!from) continue;
@@ -241,7 +241,7 @@ export default function GamePage() {
           )}
         </div>
 
-        <BetStack amount={me?.currentBet ?? 0} large />
+        <BetStack amount={me?.totalBet ?? 0} large />
 
         {displayCards && (
           <div className="my-cards-wrap">
