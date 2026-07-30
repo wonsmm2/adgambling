@@ -1,5 +1,6 @@
 import type { Card as CardType, GameResultPayload, PlayerPublic, RoomStatus } from "../types";
 import Seat from "./Seat";
+import PotPile from "./PotPile";
 
 const STATUS_LABEL: Record<RoomStatus, string> = {
   WAITING: "대기 중",
@@ -64,6 +65,7 @@ export default function Table({
           </div>
         ) : (
           <>
+            <PotPile amount={pot} />
             <div className="pot">팟 {pot.toLocaleString()}</div>
             <div className="status">
               {STATUS_LABEL[status]}

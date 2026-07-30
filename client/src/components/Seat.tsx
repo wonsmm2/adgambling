@@ -16,7 +16,7 @@ export default function Seat({ player, isDealer, isTurn, revealedCards }: Props)
 
   return (
     <div className={classes.join(" ")}>
-      <div className="avatar">
+      <div className="avatar" data-user-id={player.userId}>
         {player.username.slice(0, 2).toUpperCase()}
         {isDealer && <span className="dealer-badge">선</span>}
         {!player.connected && <span className="disconnected-dot" />}

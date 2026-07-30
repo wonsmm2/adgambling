@@ -6,7 +6,15 @@ import Table from "../components/Table";
 import BettingControls from "../components/BettingControls";
 import Card from "../components/Card";
 import BetStack from "../components/BetStack";
+import BetFlyLayer, { type FlyingBatch } from "../components/BetFlyLayer";
 import type { BetActionType, Card as CardType, GameResultPayload, RoomStatePayload } from "../types";
+
+function seatCenter(userId: string): { x: number; y: number } | null {
+  const el = document.querySelector(`[data-user-id="${userId}"]`);
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
 
 export default function GamePage() {
   const { code } = useParams<{ code: string }>();
@@ -21,7 +29,9 @@ export default function GamePage() {
   const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [flyingBatches, setFlyingBatches] = useState<FlyingBatch[]>([]);
   const lastHandNumber = useRef<number | null>(null);
+  const prevPlayersRef = useRef<Map<string, number> | null>(null);
 
   useEffect(() => {
     const socket = getSocket();
@@ -48,6 +58,34 @@ export default function GamePage() {
         setMyRankLabel(null);
       }
       lastHandNumber.current = payload.handNumber;
+
+      // 직전 상태와 비교해 배팅액이 늘어난 플레이어가 있으면, 그 자리에서 팟으로 지폐가
+      // 날아가는 연출을 트리거한다 (족보 계산과 무관한 순수 시각 효과).
+      const prevBets = prevPlayersRef.current;
+      const nextBets = new Map(payload.players.map((p) => [p.userId, p.currentBet]));
+      if (prevBets && payload.status === "BETTING") {
+        const potEl = document.querySelector("[data-pot-anchor]");
+        const potRect = potEl?.getBoundingClientRect();
+        if (potRect) {
+          const to = { x: potRect.left + potRect.width / 2, y: potRect.top + potRect.height / 2 };
+          const batches: FlyingBatch[] = [];
+          for (const p of payload.players) {
+            const delta = p.currentBet - (prevBets.get(p.userId) ?? 0);
+            if (delta <= 0) continue;
+            const from = seatCenter(p.userId);
+            if (!from) continue;
+            batches.push({ id: `${payload.handNumber}-${p.userId}-${Date.now()}`, amount: delta, from, to });
+          }
+          if (batches.length > 0) {
+            setFlyingBatches((prev) => [...prev, ...batches]);
+            setTimeout(() => {
+              setFlyingBatches((prev) => prev.filter((b) => !batches.includes(b)));
+            }, 650);
+          }
+        }
+      }
+      prevPlayersRef.current = nextBets;
+
       setRoomState(payload);
     };
     const onDealt = (payload: { cards: CardType[]; rankLabel?: string }) => {
@@ -188,7 +226,7 @@ export default function GamePage() {
       <div className={`action-dock${isMyTurn ? " my-turn" : ""}`}>
         <div className="my-seat-row">
           <div className="my-seat-info">
-            <span className="my-avatar">
+            <span className="my-avatar" data-user-id={user.id}>
               {user.username.slice(0, 2).toUpperCase()}
               {isDealer && <span className="dealer-badge">선</span>}
             </span>
@@ -233,6 +271,8 @@ export default function GamePage() {
           />
         )}
       </div>
+
+      <BetFlyLayer batches={flyingBatches} />
     </div>
   );
 }
