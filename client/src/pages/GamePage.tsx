@@ -103,6 +103,9 @@ export default function GamePage() {
 
   const me = roomState.players.find((p) => p.userId === user.id);
   const isMyTurn = roomState.status === "BETTING" && roomState.turnUserId === user.id;
+  const isDealer = roomState.dealerUserId === user.id;
+  const myRevealed = revealedByUserId.get(user.id) ?? null;
+  const displayCards = myRevealed ?? myCards;
 
   function act(type: BetActionType) {
     getSocket()?.emit("game:action", { type });
@@ -119,18 +122,23 @@ export default function GamePage() {
 
   return (
     <div className="game-page">
-      <div className="game-topbar">
-        <span>
-          방 코드: <strong>{roomState.code}</strong>
+      <header className="game-topbar">
+        <span className="room-code-badge">
+          방 코드 <strong>{roomState.code}</strong>
         </span>
-        {noticeMsg && <span className="auth-notice">{noticeMsg}</span>}
-        {errorMsg && <span className="auth-error">{errorMsg}</span>}
         <span className="logout-link" onClick={leaveRoom}>
           나가기
         </span>
-      </div>
+      </header>
 
-      <div className="table-wrap">
+      {(noticeMsg || errorMsg) && (
+        <div className="toast-stack">
+          {noticeMsg && <div className="toast toast-notice">{noticeMsg}</div>}
+          {errorMsg && <div className="toast toast-error">{errorMsg}</div>}
+        </div>
+      )}
+
+      <div className="table-scroll">
         <Table
           players={roomState.players}
           dealerUserId={roomState.dealerUserId}
@@ -139,16 +147,32 @@ export default function GamePage() {
           status={roomState.status}
           bettingRound={roomState.bettingRound}
           myUserId={user.id}
-          myCards={myCards}
           revealedByUserId={revealedByUserId}
           result={result}
         />
       </div>
 
-      <div className="my-hand">
-        {myCards && (
-          <div className="cards">
-            {myCards.map((c, i) => (
+      <div className={`action-dock${isMyTurn ? " my-turn" : ""}`}>
+        <div className="my-seat-row">
+          <div className="my-seat-info">
+            <span className="my-avatar">
+              {user.username.slice(0, 2).toUpperCase()}
+              {isDealer && <span className="dealer-badge">선</span>}
+            </span>
+            <span className="my-name">
+              {user.username}
+              {me?.folded ? " · 다이" : ""}
+            </span>
+            <span className="my-chips">{(me?.chips ?? user.chips).toLocaleString()}</span>
+          </div>
+          {isMyTurn && secondsLeft !== null && (
+            <div className="turn-timer">내 차례 · {secondsLeft}초</div>
+          )}
+        </div>
+
+        {displayCards && (
+          <div className="my-cards">
+            {displayCards.map((c, i) => (
               <Card key={i} card={c} large />
             ))}
           </div>
@@ -161,17 +185,12 @@ export default function GamePage() {
         )}
 
         {roomState.status === "BETTING" && (
-          <>
-            {isMyTurn && secondsLeft !== null && (
-              <div className="turn-timer">남은 시간: {secondsLeft}초</div>
-            )}
-            <BettingControls
-              disabled={!isMyTurn}
-              currentBet={roomState.currentBet}
-              myBet={me?.currentBet ?? 0}
-              onAction={act}
-            />
-          </>
+          <BettingControls
+            disabled={!isMyTurn}
+            currentBet={roomState.currentBet}
+            myBet={me?.currentBet ?? 0}
+            onAction={act}
+          />
         )}
       </div>
     </div>

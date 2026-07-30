@@ -140,51 +140,115 @@ body {
   cursor: pointer;
 }
 
-/* ---------- Game Table ---------- */
+/* ---------- Game Table (모바일 세로 화면 기준) ---------- */
 .game-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  background: #0b1220;
+  position: relative;
 }
 
 .game-topbar {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
   background: #0b1220;
   border-bottom: 1px solid #1c2842;
-  font-size: 14px;
+  font-size: 13px;
+  z-index: 5;
 }
 
-.table-wrap {
-  flex: 1;
+.room-code-badge {
+  color: #94a3b8;
+}
+
+.room-code-badge strong {
+  color: #fde047;
+  letter-spacing: 0.5px;
+}
+
+.game-topbar .logout-link {
+  margin-top: 0;
+}
+
+.toast-stack {
+  position: absolute;
+  top: 46px;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px;
+  gap: 6px;
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.toast-notice {
+  background: #1d3a8a;
+  color: #dbeafe;
+}
+
+.toast-error {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+.table-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  align-items: stretch;
 }
 
 .table-felt {
-  position: relative;
-  width: min(820px, 92vw);
-  aspect-ratio: 16 / 10;
-  background: radial-gradient(ellipse at center, #14532d 0%, #0d3820 70%, #082a17 100%);
-  border-radius: 50% / 40%;
-  border: 10px solid #3f2a14;
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(ellipse at top, #14532d 0%, #0d3820 65%, #082a17 100%);
+  border-radius: 20px;
+  border: 6px solid #3f2a14;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+  padding: 14px 10px;
+  gap: 10px;
+}
+
+.opponents-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 8px;
 }
 
 .table-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .table-center .pot {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: #fde047;
 }
@@ -204,7 +268,7 @@ body {
 }
 
 .winner-names {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   color: #4ade80;
 }
@@ -233,16 +297,17 @@ body {
   }
 }
 
+/* 상대방 좌석 (상단 나열) */
 .seat {
-  position: absolute;
-  width: 128px;
+  width: 72px;
   text-align: center;
-  transform: translate(-50%, -50%);
+  flex-shrink: 0;
 }
 
 .seat .avatar {
-  width: 56px;
-  height: 56px;
+  position: relative;
+  width: 40px;
+  height: 40px;
   margin: 0 auto 4px;
   border-radius: 50%;
   background: #1e293b;
@@ -250,59 +315,86 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  border: 3px solid #334155;
+  font-size: 12px;
+  border: 2px solid #334155;
 }
 
 .seat.turn .avatar {
   border-color: #fde047;
-  box-shadow: 0 0 14px #fde047;
+  box-shadow: 0 0 10px #fde047;
 }
 
-.seat.folded .avatar {
-  opacity: 0.35;
+.seat.folded {
+  opacity: 0.4;
 }
 
-.seat.dealer .avatar::after {
-  content: "선";
+.dealer-badge {
   position: absolute;
-  margin-top: -60px;
-  margin-left: 40px;
+  top: -6px;
+  right: -6px;
   background: #eab308;
   color: #1a1305;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 11px;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
+}
+
+.disconnected-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f87171;
+  border: 2px solid #0d3820;
 }
 
 .seat .name {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .seat .chips {
-  font-size: 12px;
+  font-size: 10px;
   color: #fde047;
 }
 
 .seat .bet {
-  font-size: 11px;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #f1f5f9;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+  padding: 1px 6px;
+  display: inline-block;
+}
+
+.seat .seat-status {
+  margin-top: 2px;
+  font-size: 10px;
   color: #94a3b8;
 }
 
 .seat .cards {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   justify-content: center;
   margin-top: 4px;
 }
 
 .card {
-  width: 34px;
-  height: 48px;
+  width: 26px;
+  height: 37px;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -323,9 +415,9 @@ body {
 }
 
 .card.large {
-  width: 58px;
-  height: 82px;
-  border-radius: 6px;
+  width: 66px;
+  height: 94px;
+  border-radius: 8px;
 }
 
 .card.back {
@@ -333,35 +425,120 @@ body {
   border-color: #1e3a8a;
 }
 
-.my-hand {
-  padding: 20px;
+/* 하단 액션독: 내 정보 + 카드 + 배팅 컨트롤 (엄지 닿는 범위) */
+.action-dock {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  background: #0b1220;
+  gap: 10px;
+  padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+  background: #111a2e;
   border-top: 1px solid #1c2842;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.2s ease;
 }
 
-.my-hand .cards {
+.action-dock.my-turn {
+  box-shadow: 0 -4px 16px rgba(253, 224, 71, 0.25), inset 0 0 0 1px rgba(253, 224, 71, 0.4);
+}
+
+.my-seat-row {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+.my-seat-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.my-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #eab308;
+  color: #1a1305;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.my-name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.my-chips {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fde047;
+  flex-shrink: 0;
+}
+
+.turn-timer {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1305;
+  background: #fde047;
+  padding: 4px 10px;
+  border-radius: 999px;
+  animation: pulse-timer 1s ease-in-out infinite;
+}
+
+@keyframes pulse-timer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.my-cards {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
 .betting-controls {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  justify-content: center;
+  gap: 8px;
 }
 
 .betting-controls button {
-  padding: 12px 18px;
-  border-radius: 10px;
+  flex: 1 1 28%;
+  min-height: 50px;
+  padding: 8px 6px;
+  border-radius: 12px;
   border: none;
   font-weight: 700;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.betting-controls .btn-label {
   font-size: 14px;
+}
+
+.betting-controls .btn-amount {
+  font-size: 10px;
+  opacity: 0.85;
 }
 
 .btn-ping { background: #38bdf8; color: #04202b; }
@@ -371,23 +548,23 @@ body {
 .btn-die { background: #f87171; color: #2b0605; }
 
 .betting-controls button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .ready-toggle {
+  width: 100%;
+  min-height: 50px;
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
   background: #eab308;
   color: #1a1305;
-}
-
-.turn-timer {
-  font-size: 12px;
-  color: #94a3b8;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ---------- Admin ---------- */
