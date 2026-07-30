@@ -1,5 +1,6 @@
 import type { Card as CardType, PlayerPublic } from "../types";
 import Card from "./Card";
+import BetStack from "./BetStack";
 
 interface Props {
   player: PlayerPublic;
@@ -36,7 +37,7 @@ export default function Seat({ player, isDealer, isTurn, revealedCards }: Props)
       ) : (
         <div className="seat-status">{player.ready ? "준비완료" : "대기중"}</div>
       )}
-      {player.currentBet > 0 && <div className="bet">{player.currentBet.toLocaleString()}</div>}
+      <BetStack amount={player.currentBet} />
       {player.folded && <div className="seat-status">다이</div>}
     </div>
   );

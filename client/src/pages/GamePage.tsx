@@ -5,6 +5,7 @@ import { getSocket } from "../socket";
 import Table from "../components/Table";
 import BettingControls from "../components/BettingControls";
 import Card from "../components/Card";
+import BetStack from "../components/BetStack";
 import type { BetActionType, Card as CardType, GameResultPayload, RoomStatePayload } from "../types";
 
 export default function GamePage() {
@@ -19,6 +20,7 @@ export default function GamePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const lastHandNumber = useRef<number | null>(null);
 
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function GamePage() {
   const displayCards = myRevealed ?? myCards;
   const myFinalRankLabel = result?.results.find((r) => r.userId === user.id)?.rankLabel;
   const displayRankLabel = myFinalRankLabel ?? myRankLabel;
+  const roomCode = roomState.code;
 
   function act(type: BetActionType) {
     getSocket()?.emit("game:action", { type });
@@ -130,11 +133,31 @@ export default function GamePage() {
     getSocket()?.emit("game:ready", { ready: !me?.ready });
   }
 
+  async function copyRoomCode() {
+    try {
+      await navigator.clipboard.writeText(roomCode);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = roomCode;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 1500);
+  }
+
   return (
     <div className="game-page">
       <header className="game-topbar">
         <span className="room-code-badge">
           방 코드 <strong>{roomState.code}</strong>
+          <button className="copy-code-btn" onClick={copyRoomCode}>
+            {codeCopied ? "복사됨" : "복사"}
+          </button>
         </span>
         <span className="logout-link" onClick={leaveRoom}>
           나가기
@@ -179,6 +202,8 @@ export default function GamePage() {
             <div className="turn-timer">내 차례 · {secondsLeft}초</div>
           )}
         </div>
+
+        <BetStack amount={me?.currentBet ?? 0} large />
 
         {displayCards && (
           <div className="my-cards-wrap">
