@@ -20,19 +20,22 @@ export default function BettingControls({ disabled, currentBet, myBet, onAction 
   return (
     <div className="betting-controls">
       <button className="btn-ping" disabled={disabled || !canPing} onClick={() => onAction("ping")}>
-        삥 ({PING_RAISE.toLocaleString()})
+        <span className="btn-label">삥</span>
+        <span className="btn-amount">{PING_RAISE.toLocaleString()}</span>
       </button>
       <button className="btn-half" disabled={disabled} onClick={() => onAction("half")}>
-        하프 ({halfTarget.toLocaleString()})
+        <span className="btn-label">하프</span>
+        <span className="btn-amount">{halfTarget.toLocaleString()}</span>
       </button>
       <button className="btn-call" disabled={disabled || !canCall} onClick={() => onAction("call")}>
-        콜 ({currentBet.toLocaleString()})
+        <span className="btn-label">콜</span>
+        <span className="btn-amount">{currentBet.toLocaleString()}</span>
       </button>
       <button className="btn-check" disabled={disabled || !canCheck} onClick={() => onAction("check")}>
-        체크
+        <span className="btn-label">체크</span>
       </button>
       <button className="btn-die" disabled={disabled} onClick={() => onAction("die")}>
-        다이
+        <span className="btn-label">다이</span>
       </button>
     </div>
   );

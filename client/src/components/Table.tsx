@@ -2,7 +2,7 @@ import type { Card as CardType, GameResultPayload, PlayerPublic, RoomStatus } fr
 import Seat from "./Seat";
 
 const STATUS_LABEL: Record<RoomStatus, string> = {
-  WAITING: "대기 중 (준비 완료를 눌러주세요)",
+  WAITING: "대기 중",
   DEALING: "카드 배분 중...",
   BETTING: "베팅 중",
   SHOWDOWN: "패 공개 중...",
@@ -17,7 +17,6 @@ interface Props {
   status: RoomStatus;
   bettingRound: 1 | 2;
   myUserId: string;
-  myCards: CardType[] | null;
   revealedByUserId: Map<string, CardType[]>;
   result: GameResultPayload | null;
 }
@@ -30,20 +29,30 @@ export default function Table({
   status,
   bettingRound,
   myUserId,
-  myCards,
   revealedByUserId,
   result,
 }: Props) {
-  const sorted = [...players].sort((a, b) => a.seat - b.seat);
-  const myIdx = sorted.findIndex((p) => p.userId === myUserId);
-  const rotated =
-    myIdx === -1 ? sorted : [...sorted.slice(myIdx), ...sorted.slice(0, myIdx)];
+  // 상대방만 표시한다 (내 정보/카드는 화면 하단 액션독에 크게 별도 표시).
+  const opponents = players
+    .filter((p) => p.userId !== myUserId)
+    .sort((a, b) => a.seat - b.seat);
 
-  const n = rotated.length || 1;
   const winners = result?.results.filter((r) => r.isWinner) ?? [];
 
   return (
     <div className="table-felt">
+      <div className="opponents-row">
+        {opponents.map((player) => (
+          <Seat
+            key={player.userId}
+            player={player}
+            isDealer={player.userId === dealerUserId}
+            isTurn={player.userId === turnUserId}
+            revealedCards={revealedByUserId.get(player.userId) ?? null}
+          />
+        ))}
+      </div>
+
       <div className="table-center">
         {status === "RESULT" && winners.length > 0 ? (
           <div className="winner-display">
@@ -58,27 +67,11 @@ export default function Table({
             <div className="pot">팟 {pot.toLocaleString()}</div>
             <div className="status">
               {STATUS_LABEL[status]}
-              {status === "BETTING" ? ` (${bettingRound}라운드)` : ""}
+              {status === "BETTING" ? ` · ${bettingRound}라운드` : ""}
             </div>
           </>
         )}
       </div>
-      {rotated.map((player, i) => {
-        const angle = ((90 - i * (360 / n)) * Math.PI) / 180;
-        const left = 50 + 42 * Math.cos(angle);
-        const top = 50 + 42 * Math.sin(angle);
-        return (
-          <Seat
-            key={player.userId}
-            player={player}
-            isDealer={player.userId === dealerUserId}
-            isTurn={player.userId === turnUserId}
-            style={{ left: `${left}%`, top: `${top}%` }}
-            myCards={player.userId === myUserId ? myCards : null}
-            revealedCards={revealedByUserId.get(player.userId) ?? null}
-          />
-        );
-      })}
     </div>
   );
 }
