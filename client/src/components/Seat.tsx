@@ -37,7 +37,7 @@ export default function Seat({ player, isDealer, isTurn, revealedCards }: Props)
       ) : (
         <div className="seat-status">{player.ready ? "준비완료" : "대기중"}</div>
       )}
-      <BetStack amount={player.currentBet} />
+      <BetStack amount={player.totalBet} />
       {player.folded && <div className="seat-status">다이</div>}
     </div>
   );

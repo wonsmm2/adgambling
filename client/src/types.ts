@@ -17,6 +17,7 @@ export interface PlayerPublic {
   folded: boolean;
   inHand: boolean;
   currentBet: number;
+  totalBet: number;
   hasCards: boolean;
 }
 
